@@ -23,36 +23,27 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
         }
         .header {
-            grid-column: 1 / -1;
             background: var(--primary);
             color: white;
             padding: 20px;
             border-radius: 8px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         .card {
             background: var(--card);
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         h2 { margin-top: 0; }
         
-        /* Form Styles */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
+        /* Tombol & Navigasi */
         button {
             background: var(--primary);
             color: white;
@@ -63,15 +54,31 @@
             font-weight: bold;
         }
         button:hover { background: #1d4ed8; }
-        .btn-cancel { background: #6b7280; display: none; }
-        .btn-cancel:hover { background: #4b5563; }
+        .btn-secondary { background: #6b7280; }
+        .btn-secondary:hover { background: #4b5563; }
         
-        /* Map Styles */
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        /* Map Styles (10 Kamar) */
         .room-map {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 15px;
-            margin-top: 20px;
         }
         .room {
             border: 2px solid #d1d5db;
@@ -79,7 +86,10 @@
             padding: 15px;
             text-align: center;
             background: #f9fafb;
-            transition: all 0.3s;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .room.occupied {
             border-color: var(--danger);
@@ -89,9 +99,9 @@
             border-color: var(--success);
             background: #f0fdf4;
         }
-        .room-name { font-weight: bold; font-size: 1.2em; }
-        .room-status { font-size: 0.9em; margin-top: 5px; }
-        .room-patient { font-weight: bold; color: var(--danger); margin-top: 10px; font-size: 0.9em;}
+        .room-name { font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .room-info { font-size: 0.85em; text-align: left; margin-top: 5px; }
+        .room-status { font-weight: bold; font-size: 0.9em; margin-top: 5px;}
 
         /* Table Styles */
         table {
@@ -100,110 +110,141 @@
             margin-top: 15px;
         }
         th, td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9em;
         }
         th { background: #f9fafb; }
         .action-btn {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin-right: 5px;
+            padding: 5px 8px;
+            font-size: 0.75em;
+            margin-right: 3px;
         }
         .edit-btn { background: #eab308; color: black; }
         .delete-btn { background: var(--danger); }
+
+        /* Pengaturan Tampilan Halaman (View Controller) */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
         
+        @media (max-width: 1024px) {
+            .room-map { grid-template-columns: repeat(3, 1fr); }
+        }
         @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
             .room-map { grid-template-columns: repeat(2, 1fr); }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header">
-            <h1>Sistem Manajemen Kamar Pasien</h1>
-        </div>
-
-        <!-- Kolom Kiri: Form Input -->
-        <div class="card">
-            <h2 id="formTitle">Input Data Pasien</h2>
-            <form id="patientForm">
-                <input type="hidden" id="patientId">
-                <div class="form-group">
-                    <label>Nama Pasien</label>
-                    <input type="text" id="nama" required>
-                </div>
-                <div class="form-group">
-                    <label>Umur</label>
-                    <input type="number" id="umur" required>
-                </div>
-                <div class="form-group">
-                    <label>Alamat</label>
-                    <textarea id="alamat" rows="2" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Sakit yang Diderita</label>
-                    <input type="text" id="sakit" required>
-                </div>
-                <div class="form-group">
-                    <label>Penanganan / Tindakan</label>
-                    <textarea id="penanganan" rows="2" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Pilih Kamar</label>
-                    <select id="kamar" required>
-                        <option value="">-- Pilih Kamar --</option>
-                        <option value="Kamar 101">Kamar 101</option>
-                        <option value="Kamar 102">Kamar 102</option>
-                        <option value="Kamar 103">Kamar 103</option>
-                        <option value="Kamar 104">Kamar 104</option>
-                        <option value="Kamar 105">Kamar 105</option>
-                        <option value="Kamar 106">Kamar 106</option>
-                    </select>
-                </div>
-                <button type="submit" id="btnSubmit">Simpan Data</button>
-                <button type="button" class="btn-cancel" id="btnCancel" onclick="resetForm()">Batal</button>
-            </form>
-        </div>
-
-        <!-- Kolom Kanan: Peta Kamar & Tabel List -->
-        <div>
-            <!-- Peta Kamar -->
-            <div class="card" style="margin-bottom: 20px;">
-                <h2>Peta Denah Kamar</h2>
+        
+        <!-- ================= HALAMAN 1: LAYAR DEPAN (10 KAMAR) ================= -->
+        <div id="viewDenah" class="view-section active">
+            <div class="header">
+                <h1>Denah Penghuni 10 Kamar Rumah Sakit</h1>
+                <button onclick="switchView('form')">+ Input Data Pasien</button>
+            </div>
+            
+            <div class="card">
+                <h2>Peta Status Kamar</h2>
                 <div class="room-map" id="roomMap">
-                    <!-- Kamar akan di-render oleh JavaScript -->
+                    <!-- Rendered by JavaScript -->
                 </div>
             </div>
+        </div>
 
-            <!-- Tabel Pasien -->
+        <!-- ================= HALAMAN 2: INPUT & TABEL KONTROL ================= -->
+        <div id="viewForm" class="view-section">
+            <div class="header">
+                <h1 id="formHeaderTitle">Manajemen Data & Input Pasien</h1>
+                <button class="btn-secondary" onclick="switchView('denah')">&larr; Kembali ke Denah</button>
+            </div>
+
+            <!-- Form Input -->
             <div class="card">
-                <h2>Daftar Penghuni Kamar</h2>
+                <h2 id="formTitle">Formulir Input Pasien</h2>
+                <form id="patientForm">
+                    <input type="hidden" id="patientId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nama Pasien</label>
+                            <input type="text" id="nama" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Umur (Tahun)</label>
+                            <input type="number" id="umur" required>
+                        </div>
+                        <div class="form-group full">
+                            <label>Alamat</label>
+                            <textarea id="alamat" rows="2" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Sakit yang Diderita</label>
+                            <input type="text" id="sakit" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Penanganan / Tindakan</label>
+                            <input type="text" id="penanganan" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hari / Tanggal Masuk</label>
+                            <input type="date" id="tglMasuk" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hari / Tanggal Keluar (Estimasi/Aktual)</label>
+                            <input type="date" id="tglKeluar" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Dokter Penanggung Jawab</label>
+                            <input type="text" id="dokter" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilih Kamar</label>
+                            <select id="kamar" required>
+                                <option value="">-- Pilih Kamar --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button type="submit" id="btnSubmit">Simpan Data Pasien</button>
+                        <button type="button" class="btn-secondary" id="btnCancel" onclick="resetForm()" style="display:none;">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabel Data Inputan -->
+            <div class="card">
+                <h2>Tabel Daftar Seluruh Pasien</h2>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Kamar</th>
-                                <th>Nama</th>
-                                <th>Sakit</th>
+                                <th>Nama Pasien</th>
+                                <th>Umur/Alamat</th>
+                                <th>Sakit & Penanganan</th>
+                                <th>Tgl Masuk - Keluar</th>
+                                <th>Dokter</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="patientTableBody">
-                            <!-- Data akan di-render oleh JavaScript -->
+                            <!-- Rendered by JavaScript -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script>
-        // Inisialisasi Data dari LocalStorage
+        // Inisialisasi Data 10 Kamar
         let patients = JSON.parse(localStorage.getItem('hospital_patients')) || [];
-        const roomsList = ["Kamar 101", "Kamar 102", "Kamar 103", "Kamar 104", "Kamar 105", "Kamar 106"];
+        const roomsList = ["Kamar 101", "Kamar 102", "Kamar 103", "Kamar 104", "Kamar 105", "Kamar 106", "Kamar 107", "Kamar 108", "Kamar 109", "Kamar 110"];
 
         // Element Referensi
         const form = document.getElementById('patientForm');
@@ -211,7 +252,22 @@
         const tableBody = document.getElementById('patientTableBody');
         const kamarSelect = document.getElementById('kamar');
 
-        // Fungsi Render Peta Kamar
+        // Fungsi Ganti Tampilan Halaman (View)
+        window.switchView = function(viewName) {
+            document.getElementById('viewDenah').classList.remove('active');
+            document.getElementById('viewForm').classList.remove('active');
+            
+            if(viewName === 'denah') {
+                document.getElementById('viewDenah').classList.add('active');
+                renderMap();
+            } else if(viewName === 'form') {
+                document.getElementById('viewForm').classList.add('active');
+                renderTable();
+                updateKamarSelect();
+            }
+        }
+
+        // Render Peta 10 Kamar di Layar Depan
         function renderMap() {
             mapContainer.innerHTML = '';
             roomsList.forEach(roomName => {
@@ -223,24 +279,31 @@
                 
                 let content = `<div class="room-name">${roomName}</div>`;
                 if (isOccupied) {
-                    content += `<div class="room-status" style="color: var(--danger)">Terisi</div>`;
-                    content += `<div class="room-patient">${occupant.nama}</div>`;
+                    content += `
+                        <div class="room-info">
+                            <strong>${occupant.nama}</strong><br>
+                            Umur: ${occupant.umur} th<br>
+                            <small>${occupant.alamat}</small>
+                        </div>
+                        <div class="room-status" style="color: var(--danger)">Terisi</div>
+                    `;
                 } else {
-                    content += `<div class="room-status" style="color: var(--success)">Kosong</div>`;
+                    content += `
+                        <div class="room-info" style="color: #6b7280; font-style: italic;">Belum ada penghuni</div>
+                        <div class="room-status" style="color: var(--success)">Kosong</div>
+                    `;
                 }
                 
                 roomDiv.innerHTML = content;
                 mapContainer.appendChild(roomDiv);
             });
-            updateKamarSelect();
         }
 
-        // Fungsi Update Pilihan Kamar (Hanya tampilkan yang kosong saat input baru)
+        // Update Pilihan Dropdown Kamar (Hanya tampilkan kamar kosong atau yang sedang diedit)
         function updateKamarSelect(currentEditRoom = null) {
             kamarSelect.innerHTML = '<option value="">-- Pilih Kamar --</option>';
             roomsList.forEach(roomName => {
                 const isOccupied = patients.some(p => p.kamar === roomName);
-                // Tampilkan kamar jika kosong, ATAU jika itu adalah kamar yang sedang diedit
                 if (!isOccupied || roomName === currentEditRoom) {
                     const option = document.createElement('option');
                     option.value = roomName;
@@ -250,28 +313,30 @@
             });
         }
 
-        // Fungsi Render Tabel
+        // Render Tabel di Halaman 2
         function renderTable() {
             tableBody.innerHTML = '';
-            // Urutkan berdasarkan nomor kamar
             const sortedPatients = [...patients].sort((a, b) => a.kamar.localeCompare(b.kamar));
             
             sortedPatients.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${p.kamar}</strong></td>
-                    <td>${p.nama}<br><small>Umur: ${p.umur} th | ${p.alamat}</small></td>
-                    <td>${p.sakit}<br><small>Tindakan: ${p.penanganan}</small></td>
+                    <td>${p.nama}</td>
+                    <td>${p.umur} Thn<br><small>${p.alamat}</small></td>
+                    <td><b>Sakit:</b> ${p.sakit}<br><b>Tindakan:</b> ${p.penanganan}</td>
+                    <td><small>${p.tglMasuk} s/d ${p.tglKeluar}</small></td>
+                    <td>${p.dokter}</td>
                     <td>
                         <button class="action-btn edit-btn" onclick="editPatient('${p.id}')">Edit</button>
-                        <button class="action-btn delete-btn" onclick="deletePatient('${p.id}')">Pulang</button>
+                        <button class="action-btn delete-btn" onclick="deletePatient('${p.id}')">Hapus</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
             });
         }
 
-        // Handle Submit Form (Tambah / Edit)
+        // Handle Submit Form (Tambah & Edit)
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -283,22 +348,24 @@
                 alamat: document.getElementById('alamat').value,
                 sakit: document.getElementById('sakit').value,
                 penanganan: document.getElementById('penanganan').value,
+                tglMasuk: document.getElementById('tglMasuk').value,
+                tglKeluar: document.getElementById('tglKeluar').value,
+                dokter: document.getElementById('dokter').value,
                 kamar: document.getElementById('kamar').value
             };
 
             if (id) {
-                // Mode Edit
                 const index = patients.findIndex(p => p.id === id);
                 patients[index] = patientData;
-                alert('Data berhasil diperbarui!');
+                alert('Data pasien berhasil diperbarui!');
             } else {
-                // Mode Tambah
                 patients.push(patientData);
                 alert('Pasien berhasil didaftarkan ke kamar!');
             }
 
             saveData();
             resetForm();
+            switchView('denah'); // Otomatis kembali ke layar depan setelah disimpan
         });
 
         // Fungsi Edit Data
@@ -316,40 +383,47 @@
             document.getElementById('alamat').value = patient.alamat;
             document.getElementById('sakit').value = patient.sakit;
             document.getElementById('penanganan').value = patient.penanganan;
+            document.getElementById('tglMasuk').value = patient.tglMasuk;
+            document.getElementById('tglKeluar').value = patient.tglKeluar;
+            document.getElementById('dokter').value = patient.dokter;
             
-            // Perbarui opsi select agar kamar yang sedang ditempati muncul
             updateKamarSelect(patient.kamar);
             document.getElementById('kamar').value = patient.kamar;
         };
 
-        // Fungsi Hapus Data (Pasien Pulang)
+        // Fungsi Hapus Data
         window.deletePatient = function(id) {
-            if (confirm('Apakah Anda yakin pasien ini sudah pulang/keluar kamar?')) {
+            if (confirm('Apakah Anda yakin ingin menghapus data pasien ini?')) {
                 patients = patients.filter(p => p.id !== id);
                 saveData();
+                renderTable();
+                updateKamarSelect();
             }
         };
 
-        // Fungsi Reset Form
-        function resetForm() {
+        // Reset Form
+        window.resetForm = function() {
             form.reset();
             document.getElementById('patientId').value = '';
-            document.getElementById('formTitle').innerText = 'Input Data Pasien';
-            document.getElementById('btnSubmit').innerText = 'Simpan Data';
+            document.getElementById('formTitle').innerText = 'Formulir Input Pasien';
+            document.getElementById('btnSubmit').innerText = 'Simpan Data Pasien';
             document.getElementById('btnCancel').style.display = 'none';
             updateKamarSelect();
         }
 
-        // Fungsi Simpan ke LocalStorage dan Refresh UI
+        // Simpan Data
         function saveData() {
             localStorage.setItem('hospital_patients', JSON.stringify(patients));
             renderMap();
-            renderTable();
         }
 
-        // Inisialisasi Awal
+        // Inisialisasi Pertama
         renderMap();
-        renderTable();
+
+        // FITUR AUTO-REFRESH UNTUK TV ANDROID (Reload setiap 30 detik)
+        setInterval(function() {
+            location.reload();
+        }, 30000); // 30000 milidetik = 30 detik
     </script>
 </body>
 </html>
