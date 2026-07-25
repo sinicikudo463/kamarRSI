@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Kamar Rumah Sakit</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+        .header {
+            grid-column: 1 / -1;
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        h2 { margin-top: 0; }
+        
+        /* Form Styles */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #1d4ed8; }
+        .btn-cancel { background: #6b7280; display: none; }
+        .btn-cancel:hover { background: #4b5563; }
+        
+        /* Map Styles */
+        .room-map {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .room {
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            background: #f9fafb;
+            transition: all 0.3s;
+        }
+        .room.occupied {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+        .room.available {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+        .room-name { font-weight: bold; font-size: 1.2em; }
+        .room-status { font-size: 0.9em; margin-top: 5px; }
+        .room-patient { font-weight: bold; color: var(--danger); margin-top: 10px; font-size: 0.9em;}
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th { background: #f9fafb; }
+        .action-btn {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .edit-btn { background: #eab308; color: black; }
+        .delete-btn { background: var(--danger); }
+        
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .room-map { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Sistem Manajemen Kamar Pasien</h1>
+        </div>
+
+        <!-- Kolom Kiri: Form Input -->
+        <div class="card">
+            <h2 id="formTitle">Input Data Pasien</h2>
+            <form id="patientForm">
+                <input type="hidden" id="patientId">
+                <div class="form-group">
+                    <label>Nama Pasien</label>
+                    <input type="text" id="nama" required>
+                </div>
+                <div class="form-group">
+                    <label>Umur</label>
+                    <input type="number" id="umur" required>
+                </div>
+                <div class="form-group">
+                    <label>Alamat</label>
+                    <textarea id="alamat" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Sakit yang Diderita</label>
+                    <input type="text" id="sakit" required>
+                </div>
+                <div class="form-group">
+                    <label>Penanganan / Tindakan</label>
+                    <textarea id="penanganan" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Pilih Kamar</label>
+                    <select id="kamar" required>
+                        <option value="">-- Pilih Kamar --</option>
+                        <option value="Kamar 101">Kamar 101</option>
+                        <option value="Kamar 102">Kamar 102</option>
+                        <option value="Kamar 103">Kamar 103</option>
+                        <option value="Kamar 104">Kamar 104</option>
+                        <option value="Kamar 105">Kamar 105</option>
+                        <option value="Kamar 106">Kamar 106</option>
+                    </select>
+                </div>
+                <button type="submit" id="btnSubmit">Simpan Data</button>
+                <button type="button" class="btn-cancel" id="btnCancel" onclick="resetForm()">Batal</button>
+            </form>
+        </div>
+
+        <!-- Kolom Kanan: Peta Kamar & Tabel List -->
+        <div>
+            <!-- Peta Kamar -->
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>Peta Denah Kamar</h2>
+                <div class="room-map" id="roomMap">
+                    <!-- Kamar akan di-render oleh JavaScript -->
+                </div>
+            </div>
+
+            <!-- Tabel Pasien -->
+            <div class="card">
+                <h2>Daftar Penghuni Kamar</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kamar</th>
+                                <th>Nama</th>
+                                <th>Sakit</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientTableBody">
+                            <!-- Data akan di-render oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi Data dari LocalStorage
+        let patients = JSON.parse(localStorage.getItem('hospital_patients')) || [];
+        const roomsList = ["Kamar 101", "Kamar 102", "Kamar 103", "Kamar 104", "Kamar 105", "Kamar 106"];
+
+        // Element Referensi
+        const form = document.getElementById('patientForm');
+        const mapContainer = document.getElementById('roomMap');
+        const tableBody = document.getElementById('patientTableBody');
+        const kamarSelect = document.getElementById('kamar');
+
+        // Fungsi Render Peta Kamar
+        function renderMap() {
+            mapContainer.innerHTML = '';
+            roomsList.forEach(roomName => {
+                const occupant = patients.find(p => p.kamar === roomName);
+                const isOccupied = !!occupant;
+                
+                const roomDiv = document.createElement('div');
+                roomDiv.className = `room ${isOccupied ? 'occupied' : 'available'}`;
+                
+                let content = `<div class="room-name">${roomName}</div>`;
+                if (isOccupied) {
+                    content += `<div class="room-status" style="color: var(--danger)">Terisi</div>`;
+                    content += `<div class="room-patient">${occupant.nama}</div>`;
+                } else {
+                    content += `<div class="room-status" style="color: var(--success)">Kosong</div>`;
+                }
+                
+                roomDiv.innerHTML = content;
+                mapContainer.appendChild(roomDiv);
+            });
+            updateKamarSelect();
+        }
+
+        // Fungsi Update Pilihan Kamar (Hanya tampilkan yang kosong saat input baru)
+        function updateKamarSelect(currentEditRoom = null) {
+            kamarSelect.innerHTML = '<option value="">-- Pilih Kamar --</option>';
+            roomsList.forEach(roomName => {
+                const isOccupied = patients.some(p => p.kamar === roomName);
+                // Tampilkan kamar jika kosong, ATAU jika itu adalah kamar yang sedang diedit
+                if (!isOccupied || roomName === currentEditRoom) {
+                    const option = document.createElement('option');
+                    option.value = roomName;
+                    option.textContent = roomName;
+                    kamarSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Fungsi Render Tabel
+        function renderTable() {
+            tableBody.innerHTML = '';
+            // Urutkan berdasarkan nomor kamar
+            const sortedPatients = [...patients].sort((a, b) => a.kamar.localeCompare(b.kamar));
+            
+            sortedPatients.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.kamar}</strong></td>
+                    <td>${p.nama}<br><small>Umur: ${p.umur} th | ${p.alamat}</small></td>
+                    <td>${p.sakit}<br><small>Tindakan: ${p.penanganan}</small></td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editPatient('${p.id}')">Edit</button>
+                        <button class="action-btn delete-btn" onclick="deletePatient('${p.id}')">Pulang</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Handle Submit Form (Tambah / Edit)
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('patientId').value;
+            const patientData = {
+                id: id ? id : Date.now().toString(),
+                nama: document.getElementById('nama').value,
+                umur: document.getElementById('umur').value,
+                alamat: document.getElementById('alamat').value,
+                sakit: document.getElementById('sakit').value,
+                penanganan: document.getElementById('penanganan').value,
+                kamar: document.getElementById('kamar').value
+            };
+
+            if (id) {
+                // Mode Edit
+                const index = patients.findIndex(p => p.id === id);
+                patients[index] = patientData;
+                alert('Data berhasil diperbarui!');
+            } else {
+                // Mode Tambah
+                patients.push(patientData);
+                alert('Pasien berhasil didaftarkan ke kamar!');
+            }
+
+            saveData();
+            resetForm();
+        });
+
+        // Fungsi Edit Data
+        window.editPatient = function(id) {
+            const patient = patients.find(p => p.id === id);
+            if (!patient) return;
+
+            document.getElementById('formTitle').innerText = 'Edit Data Pasien';
+            document.getElementById('btnSubmit').innerText = 'Update Data';
+            document.getElementById('btnCancel').style.display = 'inline-block';
+            
+            document.getElementById('patientId').value = patient.id;
+            document.getElementById('nama').value = patient.nama;
+            document.getElementById('umur').value = patient.umur;
+            document.getElementById('alamat').value = patient.alamat;
+            document.getElementById('sakit').value = patient.sakit;
+            document.getElementById('penanganan').value = patient.penanganan;
+            
+            // Perbarui opsi select agar kamar yang sedang ditempati muncul
+            updateKamarSelect(patient.kamar);
+            document.getElementById('kamar').value = patient.kamar;
+        };
+
+        // Fungsi Hapus Data (Pasien Pulang)
+        window.deletePatient = function(id) {
+            if (confirm('Apakah Anda yakin pasien ini sudah pulang/keluar kamar?')) {
+                patients = patients.filter(p => p.id !== id);
+                saveData();
+            }
+        };
+
+        // Fungsi Reset Form
+        function resetForm() {
+            form.reset();
+            document.getElementById('patientId').value = '';
+            document.getElementById('formTitle').innerText = 'Input Data Pasien';
+            document.getElementById('btnSubmit').innerText = 'Simpan Data';
+            document.getElementById('btnCancel').style.display = 'none';
+            updateKamarSelect();
+        }
+
+        // Fungsi Simpan ke LocalStorage dan Refresh UI
+        function saveData() {
+            localStorage.setItem('hospital_patients', JSON.stringify(patients));
+            renderMap();
+            renderTable();
+        }
+
+        // Inisialisasi Awal
+        renderMap();
+        renderTable();
+    </script>
+</body>
+</html>
