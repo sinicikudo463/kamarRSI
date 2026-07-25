@@ -365,7 +365,7 @@
 
             saveData();
             resetForm();
-            renderTable(); // Refresh tabel setelah simpan tanpa pindah halaman
+            renderTable(); 
         });
 
         // Fungsi Edit Data
@@ -419,11 +419,6 @@
 
         // Inisialisasi Pertama
         renderMap();
-
-        // FITUR AUTO-REFRESH UNTUK TV ANDROID (Reload setiap 30 detik)
-        setInterval(function() {
-            location.reload();
-        }, 30000); // 30000 milidetik = 30 detik
     </script>
 </body>
 </html>
